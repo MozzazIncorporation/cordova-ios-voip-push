@@ -70,11 +70,12 @@
     NSUUID *uuid = [[NSUUID alloc] init];
 //    NSString* uuid = @"20B0DDE7-6087-4607-842A-E97C72E4D522";
 //    NSString *callerName = payload.dictionaryPayload[@"aps"][@"alert"][@"receiver_name"];
-    NSString *handle = @"Life111";
+    NSString *handle = @"Lifetiles";
 
     CXCallUpdate *callUpdate = [[CXCallUpdate alloc] init];
     callUpdate.remoteHandle = [[CXHandle alloc] initWithType:CXHandleTypePhoneNumber value:handle];
     callUpdate.hasVideo = true;
+    callUpdate.accessibilityElementsHidden = true;
 
     [callProvider reportNewIncomingCallWithUUID:uuid update:callUpdate completion:^(NSError * _Nullable error) {
         if (error == nil) {
@@ -83,6 +84,7 @@
         }
 //        completion()
     }];
+    [self->callProvider reportCallWithUUID:uuid endedAtDate:[NSDate date] reason:CXCallEndedReasonDeclinedElsewhere];
 
     NSMutableDictionary* results = [NSMutableDictionary dictionaryWithCapacity:2];
     [results setObject:message forKey:@"function"];
