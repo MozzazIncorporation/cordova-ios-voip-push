@@ -1,9 +1,17 @@
 #import "VoIPPushNotification.h"
 #import <Cordova/CDV.h>
+#import <CallKit/CallKit.h>
+
+@interface VoIPPushNotification()<CXProviderDelegate> {
+    CXProvider *callProvider;
+}
+@end
 
 @implementation VoIPPushNotification
 
 @synthesize VoIPPushCallbackId;
+
+
 
 - (void)init:(CDVInvokedUrlCommand*)command
 {
@@ -14,6 +22,17 @@
   PKPushRegistry *pushRegistry = [[PKPushRegistry alloc] initWithQueue:dispatch_get_main_queue()];
   pushRegistry.delegate = self;
   pushRegistry.desiredPushTypes = [NSSet setWithObject:PKPushTypeVoIP];
+    
+    CXProviderConfiguration* config = [[CXProviderConfiguration alloc] initWithLocalizedName:@"VoIP Service"];
+    config.supportsVideo = true;
+    config.supportedHandleTypes = [NSSet setWithObjects:[NSNumber numberWithInteger:CXHandleTypePhoneNumber], nil];
+
+    config.maximumCallsPerCallGroup = 1;
+    // Create the provider and attach the custom delegate object
+    // used by the app to respond to updates.
+    callProvider = [[CXProvider alloc] initWithConfiguration:config];
+    [callProvider setDelegate:self queue:nil];
+
 }
 
 - (void)pushRegistry:(PKPushRegistry *)registry didUpdatePushCredentials:(PKPushCredentials *)credentials forType:(NSString *)type{
@@ -46,6 +65,24 @@
 
     NSString *message = payloadDict[@"alert"];
     NSLog(@"[objC] received VoIP msg: %@", message);
+    
+    
+    NSUUID *uuid = [[NSUUID alloc] init];
+//    NSString* uuid = @"20B0DDE7-6087-4607-842A-E97C72E4D522";
+//    NSString *callerName = payload.dictionaryPayload[@"aps"][@"alert"][@"receiver_name"];
+    NSString *handle = @"Life111";
+
+    CXCallUpdate *callUpdate = [[CXCallUpdate alloc] init];
+    callUpdate.remoteHandle = [[CXHandle alloc] initWithType:CXHandleTypePhoneNumber value:handle];
+    callUpdate.hasVideo = true;
+
+    [callProvider reportNewIncomingCallWithUUID:uuid update:callUpdate completion:^(NSError * _Nullable error) {
+        if (error == nil) {
+            //           let newCall = VoipCall(callUUID, phoneNumber: phoneNumber)
+            //           self.callManager.addCall(newCall)
+        }
+//        completion()
+    }];
 
     NSMutableDictionary* results = [NSMutableDictionary dictionaryWithCapacity:2];
     [results setObject:message forKey:@"function"];
